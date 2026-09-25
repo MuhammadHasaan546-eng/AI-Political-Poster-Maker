@@ -7,7 +7,7 @@ import { serializePoster } from '../lib/serializers';
 import { runGeneration } from '../services/generation';
 import { generateBrief } from '../services/gemini';
 import { createStorage } from '../services/storage';
-import { createPosterSchema } from '../validations/schemas';
+import { createPosterSchema, regenerateSchema } from '../validations/schemas';
 import { OCCASION_TYPES } from '../types/domain';
 
 /** Poster generation, polling, regeneration and history. */
@@ -40,12 +40,20 @@ router.post(
   }),
 );
 
-/** GET /posters — the caller's poster history (newest first). */
+/** GET /posters — the caller's poster history (newest first, optional paging). */
 router.get(
   '/',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const docs = await Poster.find({ userId: req.user!.id }).sort({ createdAt: -1 }).limit(100);
+    const limitRaw = Number(asString(req.query.limit));
+    const offsetRaw = Number(asString(req.query.offset));
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 100;
+    const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? Math.floor(offsetRaw) : 0;
+
+    const docs = await Poster.find({ userId: req.user!.id })
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit);
     return ok(res, docs.map(serializePoster));
   }),
 );
@@ -111,13 +119,20 @@ router.get(
   }),
 );
 
-/** POST /posters/:id/regenerate — re-roll a poster (bounded retries). */
+/** POST /posters/:id/regenerate — re-roll a poster with optional overrides. */
 router.post(
   '/:id/regenerate',
   requireAuth,
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     if (!isObjectId(id)) return fail(res, 400, 'Invalid poster id.', 'INVALID_ID');
+
+    // Optional font/colour/visibility overrides supplied by the builder.
+    const parsed = regenerateSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return fail(res, 422, parsed.error.issues[0]?.message ?? 'Invalid input.', 'VALIDATION_ERROR');
+    }
+    const overrides = parsed.data.overrides ?? {};
 
     const poster = await Poster.findById(id);
     if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
@@ -141,7 +156,7 @@ router.post(
     poster.errorMessage = '';
     await poster.save();
 
-    void runGeneration(poster.id as string);
+    void runGeneration(poster.id as string, overrides);
     return ok(res, serializePoster(poster), 202);
   }),
 );

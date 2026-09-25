@@ -113,7 +113,17 @@ let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI | null {
   if (!env.HAS_GEMINI || !env.GEMINI_API_KEY) return null;
   if (!client) {
+    // NOTE: the Gemini API backend (API-key auth) does NOT accept `project` /
+    // `location` — those are Vertex-only and make the constructor throw
+    // ("Project and location are not supported for Gemini API backend").
+    // The project id/number are therefore recorded for attribution/logging
+    // only, while authentication itself is carried by the API key.
     client = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+    console.log(
+      `[gemini] Client initialised (model=${env.GEMINI_TEXT_MODEL}` +
+        (env.GEMINI_PROJECT_NUMBER ? `, project=${env.GEMINI_PROJECT_NUMBER}` : '') +
+        ').',
+    );
   }
   return client;
 }

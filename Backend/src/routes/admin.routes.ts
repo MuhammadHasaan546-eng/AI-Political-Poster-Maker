@@ -1,23 +1,87 @@
 import { Router } from 'express';
 import { requireAdmin } from '../middleware/requireAdmin';
-import { GenerationLog, Poster, Template } from '../models';
+import { GenerationLog, Poster, Template, User } from '../models';
 import { asyncHandler, asString, fail, isObjectId, ok } from '../lib/http';
 import { serializePoster, serializeTemplate } from '../lib/serializers';
 import { createTemplateSchema } from '../validations/schemas';
-import { POSTER_STATUSES } from '../types/domain';
+import { POSTER_STATUSES, type PosterStatus } from '../types/domain';
 import { DEFAULT_LAYOUT_CONFIG, type LayoutConfig } from '../types/layout';
+import { createStorage } from '../services/storage';
+import { TEMPLATE_SEEDS } from '../services/template-seeds';
 
-/** Admin-only template management and poster moderation. */
+/** Admin-only template management, poster moderation and telemetry. */
 const router = Router();
 
 // Everything below requires an authenticated admin.
 router.use(requireAdmin);
+
+/* --------------------------------- Stats --------------------------------- */
+
+router.get(
+  '/stats',
+  asyncHandler(async (_req, res) => {
+    const [
+      templateTotal,
+      templateActive,
+      posterTotal,
+      pending,
+      generating,
+      completed,
+      failed,
+      userTotal,
+      logs,
+    ] = await Promise.all([
+      Template.countDocuments({}),
+      Template.countDocuments({ isActive: true }),
+      Poster.countDocuments({}),
+      Poster.countDocuments({ status: 'pending' }),
+      Poster.countDocuments({ status: 'generating' }),
+      Poster.countDocuments({ status: 'completed' }),
+      Poster.countDocuments({ status: 'failed' }),
+      User.countDocuments({}),
+      GenerationLog.find({}).sort({ createdAt: -1 }).limit(500),
+    ]);
+
+    const logTotal = logs.length;
+    const logSuccess = logs.filter((log) => log.success).length;
+    const latencySum = logs.reduce((sum, log) => sum + (log.latencyMs ?? 0), 0);
+    const tokenSum = logs.reduce((sum, log) => sum + (log.tokenEstimate ?? 0), 0);
+
+    return ok(res, {
+      templates: { total: templateTotal, active: templateActive },
+      posters: { total: posterTotal, pending, generating, completed, failed },
+      users: { total: userTotal },
+      logs: {
+        total: logTotal,
+        success: logSuccess,
+        failed: logTotal - logSuccess,
+        avgLatencyMs: logTotal > 0 ? Math.round(latencySum / logTotal) : 0,
+        totalTokens: tokenSum,
+      },
+    });
+  }),
+);
+
+/* ------------------------------- Templates ------------------------------- */
 
 router.get(
   '/templates',
   asyncHandler(async (_req, res) => {
     const docs = await Template.find({}).sort({ createdAt: 1 });
     return ok(res, docs.map(serializeTemplate));
+  }),
+);
+
+/** Re-seed the built-in library. Existing templates are left untouched. */
+router.post(
+  '/templates/seed',
+  asyncHandler(async (_req, res) => {
+    const existing = await Template.countDocuments({});
+    if (existing > 0) {
+      return ok(res, { inserted: 0, skipped: existing });
+    }
+    const created = await Template.insertMany(TEMPLATE_SEEDS, { ordered: false });
+    return ok(res, { inserted: created.length }, 201);
   }),
 );
 
@@ -95,19 +159,56 @@ router.delete(
   }),
 );
 
+/* -------------------------------- Posters -------------------------------- */
+
 router.get(
   '/posters',
   asyncHandler(async (req, res) => {
     const status = asString(req.query.status);
+    const limitRaw = Number(asString(req.query.limit));
+    const offsetRaw = Number(asString(req.query.offset));
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 100;
+    const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? Math.floor(offsetRaw) : 0;
+
     const filter: Record<string, unknown> = {};
     if (status && (POSTER_STATUSES as readonly string[]).includes(status)) {
-      filter.status = status;
+      filter.status = status as PosterStatus;
     }
 
-    const docs = await Poster.find(filter).sort({ createdAt: -1 }).limit(200);
+    const docs = await Poster.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit);
     return ok(res, docs.map(serializePoster));
   }),
 );
+
+/** Delete any user's poster (moderation) along with its stored assets. */
+router.delete(
+  '/posters/:id',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!isObjectId(id)) return fail(res, 400, 'Invalid poster id.', 'INVALID_ID');
+
+    const poster = await Poster.findById(id);
+    if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
+
+    const storage = createStorage();
+    if (storage.name === 'local') {
+      const publicIds = [poster.generatedImageUrl, poster.pdfUrl]
+        .map((url) => (url ? url.split('/storage/')[1] : undefined))
+        .filter((value): value is string => Boolean(value));
+      await Promise.all(
+        publicIds.map((publicId) => storage.delete?.(publicId).catch(() => undefined)),
+      );
+    }
+
+    await poster.deleteOne();
+    return ok(res, { id });
+  }),
+);
+
+/* ---------------------------------- Logs ---------------------------------- */
 
 router.get(
   '/logs',

@@ -104,16 +104,76 @@ export function applyBriefToLayout(layout: LayoutConfig, brief: CreativeBrief): 
   return next;
 }
 
+/**
+ * Apply user-supplied render overrides (font/colour/visibility) to a layout,
+ * returning a NEW layout. Used when a poster was regenerated with explicit
+ * tuning so the persisted `layoutSnapshot` reflects what was actually rendered.
+ */
+export function applyOverridesToLayout(
+  layout: LayoutConfig,
+  overrides: {
+    fontFamily?: string;
+    headlineColor?: string;
+    showMotifs?: boolean;
+    showFooterBar?: boolean;
+  },
+): LayoutConfig {
+  const source = toPlainLayout(layout);
+
+  const next: LayoutConfig = {
+    canvas: { ...source.canvas },
+    background: {
+      ...source.background,
+      colors: [...source.background.colors],
+      // Hiding motifs is expressed by clearing them from the layout.
+      motifIds:
+        overrides.showMotifs === false
+          ? []
+          : [...source.background.motifIds],
+    },
+    photoSlots: source.photoSlots.map((slot) => ({ ...slot })),
+    textSlots: source.textSlots.map((slot) => {
+      const clone = { ...slot };
+      if (overrides.fontFamily) clone.fontFamily = overrides.fontFamily;
+      if (slot.key === 'headline' && overrides.headlineColor) {
+        clone.color = overrides.headlineColor;
+      }
+      return clone;
+    }),
+    footerBar: {
+      ...source.footerBar,
+      keys: overrides.showFooterBar === false ? [] : [...source.footerBar.keys],
+    },
+  };
+
+  return next;
+}
+
 export interface RunGenerationResult {
   success: boolean;
   errorMessage?: string;
 }
 
+/** Render overrides accepted by {@link runGeneration}. */
+export interface GenerationOverrides {
+  fontFamily?: string;
+  headlineColor?: string;
+  showMotifs?: boolean;
+  showFooterBar?: boolean;
+}
+
 /**
  * Execute a poster generation job. Never throws — failures are persisted on the
  * poster record and logged, so callers can simply fire-and-forget.
+ *
+ * When `overrides` are supplied (e.g. a regenerate request that changed the
+ * font or headline colour) they are applied on top of the brief-themed layout
+ * and persisted in `layoutSnapshot`, so the stored layout matches the artefact.
  */
-export async function runGeneration(posterId: string): Promise<RunGenerationResult> {
+export async function runGeneration(
+  posterId: string,
+  overrides: GenerationOverrides = {},
+): Promise<RunGenerationResult> {
   const poster = await Poster.findById(posterId);
   if (!poster) {
     console.warn(`[generation] Poster ${posterId} not found; aborting.`);
@@ -160,8 +220,10 @@ export async function runGeneration(posterId: string): Promise<RunGenerationResu
     prompt = briefResult.prompt;
     const brief = briefResult.brief;
 
-    // 2. Merge brief theming into the template layout.
-    const layout = applyBriefToLayout(template.layoutConfig, brief);
+    // 2. Merge brief theming into the template layout, then apply any explicit
+    //    user overrides (font/colour/motif/footer) on top.
+    const themed = applyBriefToLayout(template.layoutConfig, brief);
+    const layout = applyOverridesToLayout(themed, overrides);
 
     // 3. Inline photos so Chrome can render without network access.
     const photos = await Promise.all(
@@ -169,7 +231,15 @@ export async function runGeneration(posterId: string): Promise<RunGenerationResu
     );
 
     // 4. Render print-ready artifacts.
-    const renderInput = { layout, form, photos: photos as string[] };
+    const renderInput = {
+      layout,
+      form,
+      photos: photos as string[],
+      overrides: {
+        fontFamily: overrides.fontFamily,
+        headlineColor: overrides.headlineColor,
+      },
+    };
     const [png, pdf] = await Promise.all([
       renderPosterPng(renderInput),
       renderPosterPdf(renderInput),

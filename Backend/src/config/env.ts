@@ -55,7 +55,11 @@ const envSchema = z.object({
 
   // --- Google Gemini ---
   GEMINI_API_KEY: optionalString,
-  GEMINI_TEXT_MODEL: z.preprocess(blankToUndefined, z.string().catch('gemini-2.5-flash')).catch('gemini-2.5-flash'),
+  /** Google Cloud / AI Studio project id, e.g. `projects/98083573185`. */
+  GEMINI_PROJECT_ID: optionalString,
+  /** Numeric project number, e.g. `98083573185`. */
+  GEMINI_PROJECT_NUMBER: optionalString,
+  GEMINI_TEXT_MODEL: z.preprocess(blankToUndefined, z.string().catch('gemini-3.8-flash')).catch('gemini-3.8-flash'),
   GEMINI_IMAGE_MODEL: optionalString,
 
   // --- Storage ---
