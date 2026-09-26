@@ -98,32 +98,30 @@ export default function BuilderPage() {
     let cancelled = false;
     void (async () => {
       try {
+        // Happy path: the id is a live ObjectId.
         const remote = await apiGetTemplate(templateId);
         if (!cancelled) setTemplate(remote);
-        return;
       } catch {
-        // Not a live id (e.g. a mock id) — try to resolve it below.
-      }
+        // Not a live id (e.g. a mock id) — resolve it to a live template.
+        const mock = getTemplateById(templateId);
 
-      const mock = getTemplateById(templateId);
-      if (!mock) {
-        if (!cancelled) setTemplate(null);
-        if (!cancelled) setTemplateLoading(false);
-        return;
-      }
-
-      // Prefer a live template with the same occasion; else the first active one.
-      try {
-        const list = await apiGetTemplates();
-        const match =
-          list.find(
-            (item) => item.isActive && item.occasionType === mock.occasionType,
-          ) ?? list.find((item) => item.isActive);
-        if (!cancelled) setTemplate(match ?? mock);
-      } catch {
-        // Backend unreachable — keep the mock so the preview still renders.
-        if (!cancelled) setTemplate(mock);
+        if (!mock) {
+          if (!cancelled) setTemplate(null);
+        } else {
+          try {
+            const list = await apiGetTemplates();
+            const match =
+              list.find(
+                (item) => item.isActive && item.occasionType === mock.occasionType,
+              ) ?? list.find((item) => item.isActive);
+            if (!cancelled) setTemplate(match ?? mock);
+          } catch {
+            // Backend unreachable — keep the mock so the preview still renders.
+            if (!cancelled) setTemplate(mock);
+          }
+        }
       } finally {
+        // ALWAYS clear the skeleton, whichever branch resolved.
         if (!cancelled) setTemplateLoading(false);
       }
     })();
