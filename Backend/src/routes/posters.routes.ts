@@ -35,7 +35,7 @@ router.post(
       headlineFontSize: headline.length > 20 ? 76 : 92,
       badgePlacement: 'center',
       backgroundPrompt: brief.backgroundPrompt ?? '',
-      rationale: brief.compositionNotes ?? 'AI পরামর্শ প্রয়োগ করা হয়েছে।',
+      rationale: brief.compositionNotes ?? 'AI suggestions have been applied.',
     });
   }),
 );
@@ -70,11 +70,11 @@ router.post(
 
     const { templateId, formData, uploadedPhotoUrls } = parsed.data;
     if (!isObjectId(templateId)) {
-      return fail(res, 400, 'টেমপ্লেট নির্বাচন সঠিক নয়।', 'INVALID_TEMPLATE');
+      return fail(res, 400, 'The selected template is not valid.', 'INVALID_TEMPLATE');
     }
 
     const template = await Template.findById(templateId);
-    if (!template) return fail(res, 404, 'টেমপ্লেট পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!template) return fail(res, 404, 'Template not found.', 'NOT_FOUND');
 
     const maxPhotos = template.layoutConfig.photoSlots.length;
     const poster = await Poster.create({
@@ -108,11 +108,11 @@ router.get(
     if (!isObjectId(id)) return fail(res, 400, 'Invalid poster id.', 'INVALID_ID');
 
     const poster = await Poster.findById(id);
-    if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!poster) return fail(res, 404, 'Poster not found.', 'NOT_FOUND');
 
     const isOwner = String(poster.userId) === req.user!.id;
     if (!isOwner && req.user!.role !== 'admin') {
-      return fail(res, 403, 'এই পোস্টারে আপনার অ্যাক্সেস নেই।', 'FORBIDDEN');
+      return fail(res, 403, 'You do not have access to this poster.', 'FORBIDDEN');
     }
 
     return ok(res, serializePoster(poster));
@@ -135,18 +135,18 @@ router.post(
     const overrides = parsed.data.overrides ?? {};
 
     const poster = await Poster.findById(id);
-    if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!poster) return fail(res, 404, 'Poster not found.', 'NOT_FOUND');
 
     const isOwner = String(poster.userId) === req.user!.id;
     if (!isOwner && req.user!.role !== 'admin') {
-      return fail(res, 403, 'এই পোস্টারে আপনার অ্যাক্সেস নেই।', 'FORBIDDEN');
+      return fail(res, 403, 'You do not have access to this poster.', 'FORBIDDEN');
     }
 
     if (poster.regenerationCount >= env.MAX_REGENERATIONS) {
       return fail(
         res,
         429,
-        `পুনরায় তৈরির সীমা (${env.MAX_REGENERATIONS}) শেষ হয়েছে।`,
+        `The regeneration limit (${env.MAX_REGENERATIONS}) has been reached.`,
         'REGEN_LIMIT',
       );
     }
@@ -170,11 +170,11 @@ router.delete(
     if (!isObjectId(id)) return fail(res, 400, 'Invalid poster id.', 'INVALID_ID');
 
     const poster = await Poster.findById(id);
-    if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!poster) return fail(res, 404, 'Poster not found.', 'NOT_FOUND');
 
     const isOwner = String(poster.userId) === req.user!.id;
     if (!isOwner && req.user!.role !== 'admin') {
-      return fail(res, 403, 'এই পোস্টারে আপনার অ্যাক্সেস নেই।', 'FORBIDDEN');
+      return fail(res, 403, 'You do not have access to this poster.', 'FORBIDDEN');
     }
 
     // Best-effort asset cleanup; never block the delete on storage errors.

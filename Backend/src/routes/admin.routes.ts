@@ -111,7 +111,7 @@ router.get(
     const { id } = req.params;
     if (!isObjectId(id)) return fail(res, 400, 'Invalid template id.', 'INVALID_ID');
     const doc = await Template.findById(id);
-    if (!doc) return fail(res, 404, 'টেমপ্লেট পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!doc) return fail(res, 404, 'Template not found.', 'NOT_FOUND');
     return ok(res, serializeTemplate(doc));
   }),
 );
@@ -128,7 +128,7 @@ router.patch(
     }
 
     const doc = await Template.findById(id);
-    if (!doc) return fail(res, 404, 'টেমপ্লেট পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!doc) return fail(res, 404, 'Template not found.', 'NOT_FOUND');
 
     if (parsed.data.name !== undefined) doc.name = parsed.data.name;
     if (parsed.data.occasionType !== undefined) doc.occasionType = parsed.data.occasionType;
@@ -150,7 +150,7 @@ router.delete(
     if (!isObjectId(id)) return fail(res, 400, 'Invalid template id.', 'INVALID_ID');
 
     const doc = await Template.findById(id);
-    if (!doc) return fail(res, 404, 'টেমপ্লেট পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!doc) return fail(res, 404, 'Template not found.', 'NOT_FOUND');
 
     // Soft-delete so existing posters keep resolving their template.
     doc.isActive = false;
@@ -191,7 +191,7 @@ router.delete(
     if (!isObjectId(id)) return fail(res, 400, 'Invalid poster id.', 'INVALID_ID');
 
     const poster = await Poster.findById(id);
-    if (!poster) return fail(res, 404, 'পোস্টার পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!poster) return fail(res, 404, 'Poster not found.', 'NOT_FOUND');
 
     const storage = createStorage();
     if (storage.name === 'local') {

@@ -28,7 +28,7 @@ router.get(
     if (!isObjectId(id)) return fail(res, 400, 'Invalid template id.', 'INVALID_ID');
 
     const doc = await Template.findById(id);
-    if (!doc) return fail(res, 404, 'টেমপ্লেট পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!doc) return fail(res, 404, 'Template not found.', 'NOT_FOUND');
     return ok(res, serializeTemplate(doc));
   }),
 );

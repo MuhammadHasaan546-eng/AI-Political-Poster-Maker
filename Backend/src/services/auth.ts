@@ -65,7 +65,7 @@ export async function registerUser(input: {
   const email = normaliseIdentifier(input.identifier);
   const existing = await User.findOne({ email });
   if (existing) {
-    throw new HttpError(409, 'এই ইমেইল/নম্বর দিয়ে ইতিমধ্যে অ্যাকাউন্ট আছে।', 'EMAIL_TAKEN');
+    throw new HttpError(409, 'An account with this email/number already exists.', 'EMAIL_TAKEN');
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -92,12 +92,12 @@ export async function loginUser(input: {
   // `passwordHash` is `select: false`, so request it explicitly.
   const user = await User.findOne({ email }).select('+passwordHash');
   if (!user) {
-    throw new HttpError(401, 'ভুল ইমেইল/নম্বর অথবা পাসওয়ার্ড।', 'INVALID_CREDENTIALS');
+    throw new HttpError(401, 'Incorrect email/number or password.', 'INVALID_CREDENTIALS');
   }
 
   const valid = await verifyPassword(input.password, user.passwordHash);
   if (!valid) {
-    throw new HttpError(401, 'ভুল ইমেইল/নম্বর অথবা পাসওয়ার্ড।', 'INVALID_CREDENTIALS');
+    throw new HttpError(401, 'Incorrect email/number or password.', 'INVALID_CREDENTIALS');
   }
 
   return { user: toPublicUser(user), token: issueToken(user) };

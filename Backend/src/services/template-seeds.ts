@@ -282,35 +282,35 @@ export interface TemplateSeed {
 
 export const TEMPLATE_SEEDS: TemplateSeed[] = [
   {
-    name: 'মহান বিজয় দিবস — জাতীয় শ্রদ্ধা',
+    name: 'Great Victory Day — National Tribute',
     occasionType: 'victory-day',
     thumbnailUrl: '',
     isActive: true,
     layoutConfig: victoryDay,
   },
   {
-    name: 'শোক ও স্মরণ — গভীর শ্রদ্ধাঞ্জলি',
+    name: 'Tribute & Remembrance — Deep Respect',
     occasionType: 'condolence',
     thumbnailUrl: '',
     isActive: true,
     layoutConfig: condolence,
   },
   {
-    name: 'নির্বাচনী প্রচার — দ্বৈত প্রতিকৃতি',
+    name: 'Election Campaign — Dual Portrait',
     occasionType: 'election-campaign',
     thumbnailUrl: '',
     isActive: true,
     layoutConfig: electionCampaign,
   },
   {
-    name: 'ঈদ শুভেচ্ছা — উৎসবমুখর',
+    name: 'Eid Greetings — Festive',
     occasionType: 'eid',
     thumbnailUrl: '',
     isActive: true,
     layoutConfig: eidGreeting,
   },
   {
-    name: 'স্বাধীনতা দিবস — জাতীয় চেতনা',
+    name: 'Independence Day — National Spirit',
     occasionType: 'independence-day',
     thumbnailUrl: '',
     isActive: true,

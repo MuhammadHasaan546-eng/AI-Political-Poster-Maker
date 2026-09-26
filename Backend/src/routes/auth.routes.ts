@@ -60,7 +60,7 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const doc = await findUserById(req.user!.id);
-    if (!doc) return fail(res, 404, 'ব্যবহারকারী পাওয়া যায়নি।', 'NOT_FOUND');
+    if (!doc) return fail(res, 404, 'User not found.', 'NOT_FOUND');
     return ok(res, toPublicUser(doc));
   }),
 );

@@ -27,21 +27,21 @@ export function normaliseIdentifier(identifier: string): string {
 export const identifierSchema = z
   .string()
   .trim()
-  .min(3, { message: 'ইমেইল বা মোবাইল নম্বর লিখুন।' })
+  .min(3, { message: 'Enter an email or mobile number.' })
   .refine((value) => EMAIL_RE.test(value.toLowerCase()) || BD_PHONE_RE.test(value), {
-    message: 'সঠিক ইমেইল বা মোবাইল নম্বর দিন।',
+    message: 'Enter a valid email or mobile number.',
   });
 
 export const registerSchema = z.object({
-  name: z.string().trim().min(2, { message: 'নাম লিখুন।' }),
+  name: z.string().trim().min(2, { message: 'Enter your name.' }),
   identifier: identifierSchema,
-  password: z.string().min(6, { message: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   role: z.enum(['user', 'admin']).optional(),
 });
 
 export const loginSchema = z.object({
   identifier: identifierSchema,
-  password: z.string().min(1, { message: 'পাসওয়ার্ড দিন।' }),
+  password: z.string().min(1, { message: 'Enter your password.' }),
 });
 
 export const posterFormSchema = z.object({
@@ -49,10 +49,10 @@ export const posterFormSchema = z.object({
   headline: z
     .string()
     .trim()
-    .min(2, { message: 'শিরোনাম লিখুন।' })
-    .max(120, { message: 'শিরোনাম ১২০ অক্ষরের মধ্যে রাখুন।' }),
-  name: z.string().trim().min(1, { message: 'নাম লিখুন।' }),
-  designation: z.string().trim().min(1, { message: 'পদবি লিখুন।' }),
+    .min(2, { message: 'Enter a headline.' })
+    .max(120, { message: 'Keep the headline within 120 characters.' }),
+  name: z.string().trim().min(1, { message: 'Enter your name.' }),
+  designation: z.string().trim().min(1, { message: 'Enter a designation.' }),
   organization: z.string().trim().max(120).optional().default(''),
   unionThanaJela: z.string().trim().max(120).optional().default(''),
   partyName: z.string().trim().max(120).optional().default(''),
@@ -60,7 +60,7 @@ export const posterFormSchema = z.object({
 });
 
 export const createPosterSchema = z.object({
-  templateId: z.string().trim().min(1, { message: 'টেমপ্লেট নির্বাচন করুন।' }),
+  templateId: z.string().trim().min(1, { message: 'Please select a template.' }),
   formData: posterFormSchema,
   uploadedPhotoUrls: z.array(z.string().trim()).max(3).optional().default([]),
 });

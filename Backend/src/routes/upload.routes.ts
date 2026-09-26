@@ -25,7 +25,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
     if (files.length === 0) {
-      return fail(res, 422, 'কমপক্ষে একটি ছবি আপলোড করুন।', 'NO_FILES');
+      return fail(res, 422, 'Please upload at least one photo.', 'NO_FILES');
     }
 
     const storage = createStorage();

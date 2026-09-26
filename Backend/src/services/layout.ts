@@ -10,7 +10,7 @@ import { motifSvg } from './motifs';
  * produce a print-ready 2400x3200 PNG.
  *
  * Bangla text is rendered as real HTML glyphs (not drawn to a bitmap), so
- * conjuncts (যুক্তাক্ষর) shape correctly via the system font stack.
+ * conjuncts shape correctly via the system font stack.
  */
 
 /** Poster form fields available to the renderer. */
@@ -67,10 +67,10 @@ function resolveText(slot: TextSlot, form: PosterForm): string {
 }
 
 const FOOTER_LABELS: Record<string, string> = {
-  organization: 'সংগঠন',
-  unionThanaJela: 'এলাকা',
-  partyName: 'দল',
-  promoteBy: 'প্রচারে',
+  organization: 'Organization',
+  unionThanaJela: 'Area',
+  partyName: 'Party',
+  promoteBy: 'Promoted by',
 };
 
 /** Compose the footer credit line from the configured keys. */

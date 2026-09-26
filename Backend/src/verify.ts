@@ -110,13 +110,13 @@ async function run(): Promise<void> {
     layout: SAMPLE_LAYOUT,
     form: {
       occasionType: 'victory-day',
-      headline: 'মহান বিজয় দিবস',
-      name: 'মোহাম্মদ আলী',
-      designation: 'সভাপতি',
-      organization: 'কেন্দ্রীয় কমিটি',
-      unionThanaJela: 'সাভার, ঢাকা',
-      partyName: 'জাতীয় সংগঠন',
-      promoteBy: 'প্রচারে — যুব সংগঠন',
+      headline: 'Great Victory Day',
+      name: 'Mohammad Ali',
+      designation: 'President',
+      organization: 'Central Committee',
+      unionThanaJela: 'Savar, Dhaka',
+      partyName: 'National Organization',
+      promoteBy: 'Promoted by — Youth Organization',
     },
     photos: [],
   });
@@ -144,7 +144,7 @@ async function run(): Promise<void> {
   await User.deleteMany({});
 
   const template = await Template.create({
-    name: 'মহান বিজয় দিবস — যাচাই',
+    name: 'Great Victory Day — Verification',
     occasionType: 'victory-day',
     thumbnailUrl: '',
     isActive: true,
@@ -153,7 +153,7 @@ async function run(): Promise<void> {
   check('template created', Boolean(template.id), template.id as string);
 
   const user = await User.create({
-    name: 'যাচাই ব্যবহারকারী',
+    name: 'Verification User',
     email: 'verify@poster.local',
     passwordHash: await hashPassword('verify123'),
     role: 'user',
@@ -165,13 +165,13 @@ async function run(): Promise<void> {
     templateId: template._id,
     status: 'pending',
     occasionType: 'victory-day',
-    headline: 'মহান বিজয় দিবস',
-    name: 'মোহাম্মদ আলী',
-    designation: 'সভাপতি',
-    organization: 'কেন্দ্রীয় কমিটি',
-    unionThanaJela: 'সাভার, ঢাকা',
-    partyName: 'জাতীয় সংগঠন',
-    promoteBy: 'প্রচারে — যুব সংগঠন',
+    headline: 'Great Victory Day',
+    name: 'Mohammad Ali',
+    designation: 'President',
+    organization: 'Central Committee',
+    unionThanaJela: 'Savar, Dhaka',
+    partyName: 'National Organization',
+    promoteBy: 'Promoted by — Youth Organization',
     photoUrls: [],
   });
 

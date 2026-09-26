@@ -17,7 +17,7 @@ export interface IPoster {
   organization?: string;
   unionThanaJela?: string;
   partyName?: string;
-  /** Footer credit line, e.g. "প্রচারে — যুব সংগঠন". */
+  /** Footer credit line, e.g. "Promoted by — Youth Organization". */
   promoteBy?: string;
   photoUrls: string[];
 

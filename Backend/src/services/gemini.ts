@@ -58,20 +58,24 @@ const HEURISTIC_MOTIFS: Record<OccasionType, string[]> = {
   birthday: ['balloon', 'confetti', 'star'],
 };
 
-const SOLEMN_MARKERS = ['শোক', 'স্মরণ', 'দোয়া', 'মরহুম', 'প্রয়াত', 'দুঃখ'];
-const CELEBRATORY_MARKERS = ['বিজয়', 'অভিনন্দন', 'শুভ', 'অভিনন্দন', 'উৎসব', 'ঈদ'];
+/**
+ * Keyword markers used to infer mood from the headline. Both Bangla and English
+ * markers are checked so detection works regardless of the UI language.
+ */
+const SOLEMN_MARKERS = ['শোক', 'স্মরণ', 'দোয়া', 'মরহুম', 'প্রয়াত', 'দুঃখ', 'tribute', 'remembrance', 'memory', 'condolence', 'mourning'];
+const CELEBRATORY_MARKERS = ['বিজয়', 'অভিনন্দন', 'শুভ', 'উৎসব', 'ঈদ', 'victory', 'congratulation', 'greetings', 'festival', 'eid', 'happy'];
 
 const HEURISTIC_NOTES: Record<OccasionType, string> = {
-  general: 'সাধারণ রাষ্ট্রীয় পোস্টার — সবুজ-সোনালি প্যালেট ও ভারসাম্যপূর্ণ কম্পোজিশন।',
-  eid: 'ঈদ উপলক্ষে উষ্ণ সবুজ-সোনালি প্যালেট, চাঁদ ও ফুলের মোটিফ।',
-  ramadan: 'রমজানের আধ্যাত্মিক আবহ — গাঢ় সবুজ ও সোনালি, চাঁদ ও লণ্ঠন।',
-  'independence-day': 'স্বাধীনতা দিবসের জাতীয় চেতনা — সবুজ-লাল পতাকা রঙ।',
-  'victory-day': 'মহান বিজয় দিবস — জাতীয় পতাকা, ধান ও শান্তির প্রতীক।',
-  'political-rally': 'জনসভা/মিছিলের প্রচার — দলীয় রঙে উচ্চ-কনট্রাস্ট শিরোনাম।',
-  'election-campaign': 'নির্বাচনী প্রচার — শক্তিশালী বোল্ড টাইপোগ্রাফি ও দলীয় প্রতীক।',
-  condolence: 'শোক ও স্মরণ — সংযত মিউটেড প্যালেট, শান্ত ফন্ট ও ফুলের মালা।',
-  congratulation: 'অভিনন্দন বার্তা — উষ্ণ সোনালি ও সবুজ, উৎসবমুখর মোটিফ।',
-  birthday: 'শুভ জন্মদিন — রঙিন স্নিগ্ধ প্যালেট ও উৎসবের মোটিফ।',
+  general: 'General state poster — green and gold palette with balanced composition.',
+  eid: 'Warm green and gold palette with crescent and floral motifs for Eid.',
+  ramadan: 'Spiritual Ramadan mood — deep green and gold, crescent and lanterns.',
+  'independence-day': 'National spirit of Independence Day — green and red flag colors.',
+  'victory-day': 'Great Victory Day — national flag, paddy, and symbols of peace.',
+  'political-rally': 'Rally/procession outreach — high-contrast headline in party colors.',
+  'election-campaign': 'Election campaign — strong bold typography and party emblems.',
+  condolence: 'Tribute and remembrance — restrained muted palette with serene fonts and wreaths.',
+  congratulation: 'Congratulations message — warm gold and green, festive motifs.',
+  birthday: 'Happy birthday — colorful soft palette with festive motifs.',
 };
 
 function detectMood(occasionType: OccasionType, headline: string): string {
@@ -96,9 +100,10 @@ export function heuristicBrief(req: BriefRequest): CreativeBrief {
     motifs,
     backgroundPrompt: `${mood} Bangladeshi political poster background, ${req.occasionType}, ${palette.join(' ')}, ornate floral border`,
     compositionNotes: HEURISTIC_NOTES[req.occasionType] ?? HEURISTIC_NOTES.general,
-    typographyNotes: 'বড় বোল্ড বাংলা হেডলাইন, নিচে হালকা সাব-হেডলাইন, সর্বনিম্ন ৯০px।',
+    typographyNotes: 'Large bold Bangla headline, lighter subheadline below, minimum 90px.',
     headlineSuggestion: req.headline,
-    subheadlineSuggestion: req.occasionType === 'condolence' ? 'গভীর শ্রদ্ধাঞ্জলি' : 'উপলক্ষে শুভেচ্ছা',
+    subheadlineSuggestion:
+      req.occasionType === 'condolence' ? 'Deep Respect' : 'Best Wishes for the Occasion',
     generatedBy: 'heuristic',
     model: 'deterministic',
   };
@@ -147,9 +152,9 @@ const RESPONSE_SCHEMA = {
 function buildPrompt(req: BriefRequest): string {
   return [
     'You are an expert art director for Bangladeshi political and ceremonial posters.',
-    'Return ONLY JSON matching the provided schema. All prose must be in Bangla (Bengali).',
+    'Return ONLY JSON matching the provided schema. All prose must be in English.',
     `Occasion: ${req.occasionType}`,
-    `Headline (Bangla): ${req.headline}`,
+    `Headline: ${req.headline}`,
     req.name ? `Subject name: ${req.name}` : '',
     req.designation ? `Designation: ${req.designation}` : '',
     req.partyName ? `Party: ${req.partyName}` : '',
