@@ -1,0 +1,285 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Sonar Bangla Poster AI — Design Tokens
+   Bangladeshi political palette + modern dark SaaS surfaces.
+   ============================================================ */
+@theme {
+  /* Core surface */
+  --color-ink: #0d1117;
+  --color-ink-soft: #111823;
+  --color-panel: #161d29;
+  --color-muted: #9ca3af;
+
+  /* Bangladesh national palette */
+  --color-emerald-bd: #006a4e;
+  --color-emerald-bd-dark: #004d38;
+  --color-emerald-bd-light: #0a8a67;
+  --color-red-bd: #f42a41;
+  --color-red-bd-dark: #c81e33;
+  --color-gold-bd: #ffc107;
+  --color-gold-bd-dark: #d99e00;
+  --color-obsidian: #0d1117;
+
+  /* Legacy Nebula brand ramp (kept for compatibility with existing UI) */
+  --color-brand-violet: #7c3aed;
+  --color-brand-violet-light: #8b5cf6;
+  --color-brand-pink: #ec4899;
+  --color-brand-orange: #f97316;
+  --color-brand-blue: #3b82f6;
+
+  /* Typography */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-bangla: var(--font-hind-siliguri), var(--font-noto-bengali), ui-sans-serif,
+    system-ui, sans-serif;
+
+  /* Motion */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
+  --animate-blob: blob 18s ease-in-out infinite;
+  --animate-aura: aura 8s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-shimmer: shimmer 3s linear infinite;
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-draw: draw 2.4s ease-out forwards;
+  --animate-rise: rise 0.8s ease-out forwards;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translatey(0);
+  }
+  50% {
+    transform: translatey(-10px);
+  }
+}
+
+@keyframes blob {
+  0%,
+  100% {
+    border-radius: 62% 38% 46% 54% / 58% 44% 56% 42%;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  33% {
+    border-radius: 42% 58% 62% 38% / 48% 62% 38% 52%;
+    transform: translate3d(2%, -3%, 0) rotate(8deg) scale(1.04);
+  }
+  66% {
+    border-radius: 54% 46% 38% 62% / 62% 38% 62% 38%;
+    transform: translate3d(-2%, 3%, 0) rotate(-6deg) scale(0.98);
+  }
+}
+
+@keyframes aura {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--dash, 2000);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+@layer base {
+  * {
+    min-width: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: #ffffff;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: rgb(0 106 78 / 0.4);
+    color: #ffffff;
+  }
+
+  /* Slim, on-brand scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d1117;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #006a4e, #ffc107);
+    border-radius: 9999px;
+    border: 2px solid #0d1117;
+  }
+
+  /* Bangla text helper */
+  .font-bangla {
+    font-family: var(--font-bangla);
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+@utility text-gradient-brand {
+  background-image: linear-gradient(90deg, #0a8a67 0%, #ffc107 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility text-gradient-gold {
+  background-image: linear-gradient(90deg, #ffc107 0%, #f42a41 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-brand-gradient {
+  background-image: linear-gradient(135deg, #006a4e 0%, #0a8a67 55%, #ffc107 100%);
+}
+
+@utility bg-emerald-gradient {
+  background-image: linear-gradient(135deg, #006a4e 0%, #0a8a67 100%);
+}
+
+@utility bg-gold-gradient {
+  background-image: linear-gradient(135deg, #ffc107 0%, #f42a41 100%);
+}
+
+@utility glass-nav {
+  background-color: rgb(13 17 23 / 0.65);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+
+@utility glass-card {
+  background-color: rgb(255 255 255 / 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+@utility glass-chip {
+  background-color: rgb(255 255 255 / 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+@utility glow-violet {
+  box-shadow:
+    0 10px 30px -10px rgb(0 106 78 / 0.8),
+    0 0 0 1px rgb(255 255 255 / 0.06) inset;
+}
+
+@utility glow-emerald {
+  box-shadow:
+    0 10px 34px -10px rgb(0 106 78 / 0.85),
+    0 0 0 1px rgb(255 255 255 / 0.07) inset;
+}
+
+@utility glow-gold {
+  box-shadow:
+    0 10px 34px -10px rgb(255 193 7 / 0.5),
+    0 0 0 1px rgb(255 193 7 / 0.18) inset;
+}
+
+@utility mask-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 12%,
+    black 88%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 12%,
+    black 88%,
+    transparent
+  );
+}
+
+@utility chart-draw {
+  stroke-dasharray: var(--dash, 2000);
+  stroke-dashoffset: var(--dash, 2000);
+  animation: var(--animate-draw);
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
