@@ -45,6 +45,14 @@ const envSchema = z.object({
   CORS_ORIGIN: z.preprocess(blankToUndefined, z.string().catch('http://localhost:3000')).catch('http://localhost:3000'),
   PUBLIC_BASE_URL: z.preprocess(blankToUndefined, z.string().catch('http://localhost:5000')).catch('http://localhost:5000'),
 
+  // --- Cookies (cross-site auth) ---
+  /** `lax` | `strict` | `none`. Defaults to `none` in production, else `lax`. */
+  COOKIE_SAMESITE: z.preprocess(blankToUndefined, z.enum(['lax', 'strict', 'none']).optional()),
+  /** Force the `Secure` attribute. Defaults to `true` in production, else `false`. */
+  COOKIE_SECURE: optionalString,
+  /** Optional cookie domain (leave blank for host-only cookies, which we recommend). */
+  COOKIE_DOMAIN: optionalString,
+
   // --- Database ---
   MONGODB_URI: optionalString,
   DEV_IN_MEMORY_DB: booleanish(false).catch(false),
@@ -97,6 +105,10 @@ export interface AppEnv extends RawEnv {
   HAS_GEMINI: boolean;
   /** True when Cloudinary credentials are configured (else local disk). */
   HAS_CLOUDINARY: boolean;
+  /** Resolved `SameSite` policy applied to the auth cookie. */
+  COOKIE_SAMESITE_RESOLVED: 'lax' | 'strict' | 'none';
+  /** Resolved `Secure` flag applied to the auth cookie. */
+  COOKIE_SECURE_RESOLVED: boolean;
 }
 
 function buildEnv(): AppEnv {
@@ -114,12 +126,24 @@ function buildEnv(): AppEnv {
     typeof raw.CLOUDINARY_API_SECRET === 'string' &&
     raw.CLOUDINARY_API_SECRET.length > 0;
 
+  // Cross-site auth cookie defaults: a Secure + SameSite=None cookie is required
+  // for the Vercel (frontend) <-> Render (API) deployment to persist sessions.
+  const isProduction = raw.NODE_ENV === 'production';
+  const cookieSameSite: 'lax' | 'strict' | 'none' =
+    raw.COOKIE_SAMESITE ?? (isProduction ? 'none' : 'lax');
+  const cookieSecure =
+    raw.COOKIE_SECURE !== undefined
+      ? String(raw.COOKIE_SECURE).toLowerCase() === 'true'
+      : isProduction;
+
   return {
     ...raw,
     FRONTEND_ORIGIN: corsOrigin,
     HAS_MONGODB_URI: hasMongo,
     HAS_GEMINI: hasGemini,
     HAS_CLOUDINARY: hasCloudinary,
+    COOKIE_SAMESITE_RESOLVED: cookieSameSite,
+    COOKIE_SECURE_RESOLVED: cookieSecure,
   };
 }
 

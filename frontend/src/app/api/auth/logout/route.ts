@@ -1,4 +1,4 @@
-import { forwardInit, proxyToBackend } from "@/lib/server-proxy";
+import { credentialsInit, proxyToBackend } from "@/lib/server-proxy";
 
 /**
  * POST /api/auth/logout — proxied to the Express backend.
@@ -8,5 +8,6 @@ import { forwardInit, proxyToBackend } from "@/lib/server-proxy";
  * invalidated server-side (not just cleared in localStorage).
  */
 export async function POST(request: Request) {
-  return proxyToBackend("/api/auth/logout", forwardInit(request, "POST"));
+  const { init, cookies } = credentialsInit(request, "POST");
+  return proxyToBackend("/api/auth/logout", init, { cookies });
 }

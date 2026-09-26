@@ -13,6 +13,9 @@ import type {
 /** Thin fetch wrapper that normalises the `ApiResponse<T>` envelope. */
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
+    // Same-origin `/api/*` proxy; `include` keeps the httpOnly session cookie
+    // flowing on every call (registration, login, and authenticated requests).
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     ...init,
   });
@@ -64,7 +67,11 @@ export async function apiRegister(input: {
  * missing session as a normal, non-throwing state.
  */
 export async function apiGetMe(): Promise<User | null> {
-  const res = await fetch("/api/auth/me", { method: "GET", cache: "no-store" });
+  const res = await fetch("/api/auth/me", {
+    method: "GET",
+    cache: "no-store",
+    credentials: "include",
+  });
   if (res.status === 401) return null;
 
   const body = (await res.json().catch(() => null)) as ApiResponse<User> | null;
@@ -75,7 +82,7 @@ export async function apiGetMe(): Promise<User | null> {
 /** Clear the server-side httpOnly session cookie. Never throws. */
 export async function apiLogout(): Promise<void> {
   try {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
   } catch {
     // Best-effort: the client clears local state regardless.
   }
@@ -171,7 +178,11 @@ export async function apiUploadImages(files: File[]): Promise<UploadResult[]> {
   const data = new FormData();
   for (const file of files) data.append("photos", file);
 
-  const res = await fetch("/api/upload", { method: "POST", body: data });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: data,
+    credentials: "include",
+  });
   const body = (await res.json()) as ApiResponse<UploadResult[]>;
   if (!res.ok || body.success === false) {
     throw new Error(body.success === false ? body.error : "Upload failed.");

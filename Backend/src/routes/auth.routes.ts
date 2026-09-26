@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { env } from '../config/env';
 import { AUTH_COOKIE_NAME, requireAuth } from '../middleware/auth';
 import { asyncHandler, fail, ok } from '../lib/http';
@@ -11,14 +11,29 @@ const router = Router();
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * The cookie attributes used for the session token.
+ *
+ * These are resolved from the environment (`COOKIE_SAMESITE` / `COOKIE_SECURE`)
+ * and default to a cross-site-safe `SameSite=None; Secure` pair in production so
+ * the Vercel (frontend) <-> Render (API) deployment keeps the session alive.
+ */
+function authCookieOptions(): CookieOptions {
+  const options: CookieOptions = {
+    httpOnly: true,
+    sameSite: env.COOKIE_SAMESITE_RESOLVED,
+    secure: env.COOKIE_SECURE_RESOLVED,
+    path: '/',
+  };
+  if (env.COOKIE_DOMAIN) options.domain = env.COOKIE_DOMAIN;
+  return options;
+}
+
 /** Set the httpOnly auth cookie alongside the JSON token response. */
 function setAuthCookie(res: Response, token: string): void {
   res.cookie(AUTH_COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: env.NODE_ENV === 'production',
+    ...authCookieOptions(),
     maxAge: SEVEN_DAYS_MS,
-    path: '/',
   });
 }
 
@@ -51,7 +66,9 @@ router.post(
 );
 
 router.post('/logout', (_req, res) => {
-  res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
+  // Attributes MUST mirror those used when setting the cookie, otherwise some
+  // browsers refuse to match and clear it.
+  res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions());
   return ok(res, { loggedOut: true });
 });
 
